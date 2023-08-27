@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Details</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa; /* Light gray background color */
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-top: 50px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #1b6ec2; /* Dark blue header color */
+        }
+        label {
+            font-weight: bold;
+            color: #555555; /* Dark gray label color */
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .success-message {
+            color: green;
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>User Details</h1>
+        <form id="viewUserForm">
+            <div class="form-group">
+                <label for="accountId">Account ID:</label>
+                <input type="text" id="accountId" name="accountId" class="form-control" required>
+            </div>
+            <button type="button" id="viewButton" class="btn btn-primary">View</button>
+        </form>
+        
+        <form id="editUserForm" style="display: none;">
+            <input type="hidden" id="hiddenAccountId" name="accountId">
+            <div class="form-group">
+                <label for="firstname">First Name:</label>
+                <input type="text" id="firstname" name="firstname" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="lastname">Last Name:</label>
+                <input type="text" id="lastname" name="lastname" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="phno">Phone Number:</label>
+                <input type="text" id="phno" name="phno" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Update User</button>
+            <button type="button" id="deleteButton" class="btn btn-danger">Delete User</button>
+        </form>
+        <p id="updateSuccessMessage" class="success-message">User updated successfully</p>
+        <p id="deleteSuccessMessage" class="success-message">User deleted successfully</p>
+    </div>
+    <script>
+    document.getElementById("viewButton").addEventListener("click", function() {
+        const accountId = document.getElementById("accountId").value;
+
+        fetch(`/users/${accountId}`)
+            .then(response => response.json())
+            .then(user => {
+                populateFormFields(user);
+                editUserForm.style.display = "block";
+            })
+            .catch(error => {
+                console.error("Error fetching user data:", error);
+            });
+    });
+
+    document.getElementById("editUserForm").addEventListener("submit", function(event) {
+        event.preventDefault();
+        const accountId = document.getElementById("hiddenAccountId").value;
+
+        const formData = new FormData(event.target);
+        const user = {
+            firstname: formData.get("firstname"),
+            lastname: formData.get("lastname"),
+            email: formData.get("email"),
+            phno: formData.get("phno"),
+            password: formData.get("password")
+        };
+
+        fetch(`/users/${accountId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(user)
+        })
+        .then(response => response.json())
+        .then(updatedUser => {
+            // Display the update success message
+            const updateSuccessMessage = document.getElementById("updateSuccessMessage");
+            updateSuccessMessage.style.display = "block";
+            
+            // Update form fields with the updated user data
+            populateFormFields(updatedUser);
+        })
+        .catch(error => {
+            console.error("Error updating user:", error);
+        });
+    });
+
+
+    document.getElementById("deleteButton").addEventListener("click", function() {
+        const accountId = document.getElementById("hiddenAccountId").value;
+
+        fetch(`/users/${accountId}`, {
+            method: "DELETE"
+        })
+            .then(response => {
+                if (response.ok) {
+                    deleteSuccessMessage.style.display = "block";
+                    setTimeout(() => {
+                        window.location.href = "/"; // Redirect after deletion
+                    }, 2000); // Delay in milliseconds
+                } else {
+                    console.error("Error deleting user");
+                }
+            })
+            .catch(error => {
+                console.error("Error deleting user:", error);
+            });
+    });
+
+    function populateFormFields(user) {
+        document.getElementById("hiddenAccountId").value = user.id;
+        document.getElementById("firstname").value = user.firstname;
+        document.getElementById("lastname").value = user.lastname;
+        document.getElementById("email").value = user.email;
+        document.getElementById("phno").value = user.phno;
+        document.getElementById("password").value = user.password;
+    }
+    </script>
+</body>
+</html>
