@@ -1,0 +1,30 @@
+- name : Configure Docker on EC2 Instances
+  hosts : prod-server
+  become: true
+  connection : ssh
+  tasks : 
+  - name: updating apt
+    command : sudo apt-get update
+
+  - name : Install Docker
+    command : sudo apt install -y docker.io
+    become : yes
+    become_user : root
+
+  - name : Start Docker Service
+    command : sudo systemctl start docker
+    become : yes
+    become_user : root
+
+  - name: Check if container exists
+    shell: sudo docker ps -f "name=banking-prod" -aq
+    register: container_ids
+
+  - name: Stop and remove container if it exists
+    shell: sudo docker stop {{ item }} && sudo docker rm {{ item }}
+    with_items: "{{ container_ids.stdout_lines }}"
+    when: container_ids.stdout_lines | length > 0
+
+  - name: Deploy Docker Container
+    become : yes
+    command: docker run -itd -p 8080:8080 --name banking-prod ashinv121/banking:1.0
