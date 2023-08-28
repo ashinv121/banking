@@ -28,3 +28,16 @@
   - name: Deploy Docker Container
     become : yes
     command: docker run -itd -p 8080:8080 --name banking-prod ashinv121/banking:1.0
+  
+  - name: Check if node-exporter container exists
+    shell: sudo docker ps -f "name=node-exporter" -aq
+    register: node_exporter_container_ids
+    ignore_errors: yes
+
+  - name: Stop and remove node-exporter container if it exists
+    shell: sudo docker stop {{ item }} && sudo docker rm {{ item }}
+    with_items: "{{ node_exporter_container_ids.stdout_lines }}"
+    when: node_exporter_container_ids.stdout_lines | length > 0
+
+  - name: Deploy Prometheus Node Exporter Docker Container
+    command: docker run -itd -p 9100:9100 --name node-exporter prom/node-exporter
